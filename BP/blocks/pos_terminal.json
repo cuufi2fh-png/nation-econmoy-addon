@@ -1,0 +1,21 @@
+{
+  "format_version": "1.20.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "nf:pos_terminal",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": true,
+      "minecraft:geometry": "geometry.pos_terminal",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "pos_terminal",
+          "render_method": "opaque"
+        }
+      }
+    }
+  }
+}

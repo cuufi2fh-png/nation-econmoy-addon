@@ -1,0 +1,27 @@
+{
+  "resource_pack_name": "nation_finance",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "check_card": {
+      "textures": "textures/items/check_card"
+    },
+    "credit_card": {
+      "textures": "textures/items/credit_card"
+    },
+    "id_card": {
+      "textures": "textures/items/id_card"
+    },
+    "property_wand": {
+      "textures": "textures/items/stick"
+    },
+    "building_cert": {
+      "textures": "textures/items/paper"
+    },
+    "chip_1k": {
+      "textures": "textures/items/chip_1k"
+    },
+    "chip_10k": {
+      "textures": "textures/items/chip_10k"
+    }
+  }
+}

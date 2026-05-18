@@ -1,0 +1,17 @@
+{
+  "resource_pack_name": "nation_finance",
+  "texture_name": "atlas.terrain",
+  "padding": 8,
+  "num_mip_levels": 4,
+  "texture_data": {
+    "pos_terminal": {
+      "textures": "textures/blocks/pos_terminal"
+    },
+    "trade_port": {
+      "textures": "textures/blocks/trade_port"
+    },
+    "casino_machine": {
+      "textures": "textures/blocks/casino_machine"
+    }
+  }
+}

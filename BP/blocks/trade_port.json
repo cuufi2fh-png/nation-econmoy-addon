@@ -1,0 +1,21 @@
+{
+  "format_version": "1.20.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "nf:trade_port",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": true,
+      "minecraft:geometry": "geometry.trade_port",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "trade_port",
+          "render_method": "opaque"
+        }
+      }
+    }
+  }
+}
