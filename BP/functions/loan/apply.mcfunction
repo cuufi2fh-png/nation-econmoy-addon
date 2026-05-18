@@ -1,1 +1,0 @@
-scriptevent nf:loan apply

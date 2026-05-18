@@ -1,8 +1,0 @@
-{
-  "format_version": "1.20.50",
-  "minecraft:block": {
-    "description": {
-      "identifier": "nf:pos_terminal"
-    }
-  }
-}
