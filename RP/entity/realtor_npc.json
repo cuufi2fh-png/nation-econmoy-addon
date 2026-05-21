@@ -1,0 +1,20 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "nf:realtor_npc",
+      "materials": {
+        "default": "villager"
+      },
+      "textures": {
+        "default": "textures/entity/villager2/professions/cartographer"
+      },
+      "geometry": {
+        "default": "geometry.villager.v2"
+      },
+      "render_controllers": [
+        "controller.render.villager.v2"
+      ]
+    }
+  }
+}

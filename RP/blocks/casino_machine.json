@@ -1,0 +1,17 @@
+{
+  "format_version": "1.20.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "nf:casino_machine",
+      "menu_category": {
+        "category": "construction",
+        "group": "itemGroup.name.walls"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "카지노 머신"
+      }
+    }
+  }
+}

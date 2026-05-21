@@ -1,0 +1,13 @@
+{
+  "format_version": "1.20.50",
+  "minecraft:item": {
+    "description": {
+      "identifier": "nf:box_linker",
+      "category": "equipment"
+    },
+    "components": {
+      "minecraft:icon": "box_linker",
+      "minecraft:render_offsets": "tools"
+    }
+  }
+}

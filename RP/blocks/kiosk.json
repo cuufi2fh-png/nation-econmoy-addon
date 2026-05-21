@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "nf:kiosk",
+      "menu_category": {
+        "category": "construction",
+        "group": "itemGroup.name.walls"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "키오스크"
+      },
+      "minecraft:client_collision": false,
+      "minecraft:geometry": "geometry.kiosk",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "pos_terminal",
+          "render_method": "opaque"
+        }
+      }
+    }
+  }
+}

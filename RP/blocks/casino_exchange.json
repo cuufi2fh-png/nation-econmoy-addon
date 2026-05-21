@@ -1,0 +1,24 @@
+{
+  "format_version": "1.20.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "nf:casino_exchange",
+      "menu_category": {
+        "category": "construction",
+        "group": "itemGroup.name.walls"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "카지노 환전소"
+      },
+      "minecraft:geometry": "geometry.casino_exchange",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "casino_exchange",
+          "render_method": "opaque"
+        }
+      }
+    }
+  }
+}

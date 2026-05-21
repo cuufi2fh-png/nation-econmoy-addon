@@ -1,0 +1,42 @@
+{
+  "resource_pack_name": "nation_finance",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "check_card": {
+      "textures": "textures/items/check_card.png"
+    },
+    "credit_card": {
+      "textures": "textures/items/credit_card.png"
+    },
+    "id_card": {
+      "textures": "textures/items/id_card.png"
+    },
+    "property_wand": {
+      "textures": "textures/items/stick"
+    },
+    "building_cert": {
+      "textures": "textures/items/paper"
+    },
+    "chip_1k": {
+      "textures": "textures/items/chip_1k.png"
+    },
+    "chip_10k": {
+      "textures": "textures/items/chip_10k.png"
+    },
+    "guide_book": {
+      "textures": "textures/items/book"
+    },
+    "kiosk_linker": {
+      "textures": "textures/items/stick"
+    },
+    "receipt": {
+      "textures": "textures/items/paper"
+    },
+    "supply_receipt": {
+      "textures": "textures/items/paper"
+    },
+    "box_linker": {
+      "textures": "textures/items/stick"
+    }
+  }
+}

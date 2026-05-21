@@ -1,0 +1,28 @@
+{
+  "format_version": "1.20.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "nf:pos_terminal",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "POS 단말기 (계산대)"
+      },
+      "minecraft:geometry": "geometry.pos_terminal",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "pos_terminal",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": true,
+      "minecraft:selection_box": true,
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1
+      }
+    }
+  }
+}
