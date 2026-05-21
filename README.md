@@ -25,7 +25,6 @@ A comprehensive, highly optimized Minecraft Bedrock Edition Add-on that integrat
 - **POS Terminals (`nf:pos_terminal`)**: Advanced cash register for store owners to manage catalogs, IPOs, and supplier contracts.
 - **Kiosk (`nf:kiosk`)**: A sleek, vertical 1.5-block interactive terminal for customers to browse items, add to cart, and pay via cards.
 - **Supplier & Franchise Chain (물류망 및 가맹 계약)**: Store owners can contract suppliers (or the Gov Logistics Center). Orders generate Supply Receipts (`nf:supply_receipt`).
-- **Virtual Stock Boxes (`nf:store_stock_box`, `nf:supplier_stock_box`)**: 27-slot physical container blocks that automatically sync with nearby POS terminals. Items are automatically deducted and transported upon kiosk payment or supplier dispatch.
 
 ### 5. Automated Casino System (자동화 카지노 시스템)
 - **Casino Exchange & Manager (`nf:casino_exchange`)**: Register as a casino owner to manage linked slot machines, set custom win rates (10% - 90%), and track total revenue (+/-) and paid taxes. Guests can buy 1k/10k chips or cash out.
