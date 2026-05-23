@@ -1,12 +1,12 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Nation Finance RP - 5.3.0",
+    "name": "Nation Finance RP - 5.4.0",
     "description": "국가전쟁 및 금융 시스템 리소스 팩",
     "uuid": "4d91c2f8-6a43-4d8b-9f10-8c7e2b5a91de",
     "version": [
       5,
-      3,
+      4,
       0
     ],
     "min_engine_version": [
@@ -21,7 +21,7 @@
       "uuid": "93e4b7a1-2c65-4f9d-a871-5d2c7e8f41ab",
       "version": [
         5,
-        3,
+        4,
         0
       ]
     }
