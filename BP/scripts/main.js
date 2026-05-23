@@ -1729,54 +1729,35 @@ function showPosOrderUI(player, marker) {
         return;
     }
 
-    // ★ 핵심 수정: 가맹점주(pos_owner)와 납품업자(supplier_owner) 키 분리
-    // 만약 마커에 supplier_owner가 없다면 구형 호환성을 위해 pos_owner를 차선책으로 검색
+    // 진짜 납품업체 주인의 이름 판별
     let supplierOwnerName = marker.getDynamicProperty("supplier_owner") || marker.getDynamicProperty("pos_owner");
-    
-    // [만약의 상황 방어] 만약 가져온 이름이 가맹점주 본인 이름과 같다면? 
-    // 가맹 계약(franchise) UI나 마커 등록 시점에 저장된 다른 납품업자 데이터가 있는지 확인해야 합니다.
-    let terminals = safeParse("pos_terminals", {});
-    const posKey = `${marker.getDynamicProperty("linked_pos") || ""}`;
-    if (supplierOwnerName === player.name && terminals[posKey]) {
-        // 계약 테이블 등에서 납품업자 이름을 다르게 저장했다면 그 키를 매칭해야 합니다.
-        // 우선 디버깅을 위해 현재 메커니즘을 유지하되 경고를 띄웁니다.
-        console.warn(`[발주 경고] 납품업자 이름이 가맹점주 본인(${player.name})으로 인식되고 있습니다.`);
+    if (!supplierOwnerName && marker.nameTag) {
+        const cleanTag = marker.nameTag.replace(/§./g, "");
+        if (cleanTag.includes("납품업체")) supplierOwnerName = cleanTag.split(" ")[0];
     }
 
     const storeName = supplierOwnerName ? `${supplierOwnerName} 납품업체` : "가맹 도매처";
 
-    // 1. 도매 카탈로그 데이터 불러오기
+    // 도매 카탈로그 데이터 불러오기
     let catalog = [];
     try {
-        // 납품업자가 상품 등록할 때 썼을 확률이 높은 두 가지 키를 모두 체크 (교차 검증)
-        catalog = JSON.parse(
-            marker.getDynamicProperty("supplier_catalog") || 
-            marker.getDynamicProperty("catalog") || 
-            "[]"
-        );
+        catalog = JSON.parse(marker.getDynamicProperty("supplier_catalog") || "[]");
     } catch {
         catalog = [];
     }
 
-    // [전역 백업 조회] 마커 내부 데이터가 꼬였을 경우 납품업자 이름으로 저장된 전역 카탈로그 검색
     if (catalog.length === 0 && supplierOwnerName) {
         try {
-            const globalBackup = world.getDynamicProperty(`supplier_catalog_${supplierOwnerName}`) || 
-                                 world.getDynamicProperty(`catalog_${supplierOwnerName}`);
-            if (globalBackup) {
-                catalog = JSON.parse(globalBackup);
-                marker.setDynamicProperty("supplier_catalog", globalBackup);
-                console.warn(`[발주 동기화] ${supplierOwnerName}의 전역 백업 데이터를 마커로 복구했습니다.`);
-            }
+            const globalBackup = world.getDynamicProperty(`supplier_catalog_${supplierOwnerName}`);
+            if (globalBackup) catalog = JSON.parse(globalBackup);
         } catch {}
     }
 
     if (catalog.length === 0) {
-        player.sendMessage(`§c[발주 실패]\n§7'${storeName}'에 등록된 도매 상품이 없습니다.\n§7(납품업자가 다른 마커에 물건을 등록했거나 소유자 인식이 꼬였습니다)`);
+        player.sendMessage(`§c[발주 실패]\n§7'${storeName}'에 등록된 도매 상품이 없습니다.`);
         return;
     }
 
-    // 2. 가맹점주에게 납품업체의 상품 목록 보여주기
     const form = new ActionFormData()
         .title("§l§a📨 가맹점 상품 발주")
         .body(`§7납품처: §e${storeName}\n§7발주할 상품을 선택하세요.`);
@@ -1791,7 +1772,6 @@ function showPosOrderUI(player, marker) {
 
         const selectedProd = catalog[res.selection];
 
-        // 3. 수량 입력 폼
         new ModalFormData()
             .title(`§a[발주 신청] ${selectedProd.name}`)
             .textField(`§7도매가: ${selectedProd.price.toLocaleString()}₩\n\n§f발주할 수량을 입력하세요.`, "예: 64")
@@ -1808,7 +1788,7 @@ function showPosOrderUI(player, marker) {
 
                 const totalCost = selectedProd.price * count;
 
-                // 4. 잔액 검증
+                // 잔액 검증 및 차감
                 let playerMoney = 0;
                 try {
                     playerMoney = world.scoreboard.getObjective("player_money")?.getScore(player) || 0;
@@ -1817,11 +1797,10 @@ function showPosOrderUI(player, marker) {
                 }
 
                 if (playerMoney < totalCost) {
-                    player.sendMessage(`§c[발주 실패] 잔액이 부족합니다.\n§7필요 금액: ${totalCost.toLocaleString()}₩`);
+                    player.sendMessage(`§c[발주 실패] 가맹점 잔액이 부족합니다.\n§7필요 금액: ${totalCost.toLocaleString()}₩`);
                     return;
                 }
 
-                // 5. 대금 차감
                 try {
                     player.runCommand(`scoreboard players remove @s player_money ${totalCost}`);
                 } catch (e) {
@@ -1829,28 +1808,37 @@ function showPosOrderUI(player, marker) {
                     return;
                 }
 
-                // 6. 납품업자 마커의 발주 대기열(orders)에 추가
-                let orders = [];
-                try {
-                    orders = JSON.parse(marker.getDynamicProperty("orders") || "[]");
-                } catch {
-                    orders = [];
+                // ★ [핵심 고정] 마커가 아닌 world 전역 저장소에 납품업자별 독립 대기열 저장
+                let globalOrders = [];
+                if (supplierOwnerName) {
+                    try {
+                        const rawGlobal = world.getDynamicProperty(`orders_${supplierOwnerName}`);
+                        if (rawGlobal) globalOrders = JSON.parse(rawGlobal);
+                    } catch {
+                        globalOrders = [];
+                    }
                 }
 
-                orders.push({
+                const newOrder = {
                     name: selectedProd.name,
                     item: selectedProd.item,
                     count: count,
                     totalCost: totalCost,
-                    orderPlayer: player.name
-                });
+                    orderPlayer: player.name,
+                    timestamp: Date.now()
+                };
 
-                marker.setDynamicProperty("orders", JSON.stringify(orders));
+                globalOrders.push(newOrder);
+                
+                // 전역 DB 및 백업용 마커 동시 저장 (리스트 안 뜨는 현상 완전 박멸)
+                if (supplierOwnerName) {
+                    world.setDynamicProperty(`orders_${supplierOwnerName}`, JSON.stringify(globalOrders));
+                }
+                marker.setDynamicProperty("orders", JSON.stringify(globalOrders));
 
-                // 7. 진짜 납품업체 주인 인벤토리에 실시간 영수증 발송
+                // 실시간 영수증 발송부
                 if (supplierOwnerName) {
                     const supplierPlayer = world.getAllPlayers().find(p => p.name === supplierOwnerName);
-                    
                     if (supplierPlayer) {
                         try {
                             const supplierInv = supplierPlayer.getComponent("inventory")?.container;
@@ -1859,24 +1847,22 @@ function showPosOrderUI(player, marker) {
                                 if (receiptItemType) {
                                     const receipt = new ItemStack(receiptItemType, 1);
                                     receipt.nameTag = `§b[발주요청] §f${selectedProd.name} §e${count}개 §7(발주: ${player.name})`;
-                                    
                                     const leftover = supplierInv.addItem(receipt);
                                     if (leftover && leftover.amount > 0) {
                                         supplierPlayer.dimension.spawnItem(receipt, supplierPlayer.location);
                                     }
-                                    supplierPlayer.sendMessage(`§d[물류 가맹 알림] §e${player.name}§f 가맹점에서 §b${selectedProd.name} ${count}개§f를 발주했습니다!`);
+                                    supplierPlayer.sendMessage(`§d[물류 가맹 알림] §e${player.name}§f 가맹점에서 §b${selectedProd.name} ${count}개§f를 발주했습니다! (영수증 지급됨)`);
                                 }
                             }
-                        } catch (receiptErr) {
-                            console.warn(receiptErr);
-                        }
+                        } catch {}
                     }
                 }
 
                 player.sendMessage(
                     `§a[발주 완료]\n` +
                     `§f신청 상품: ${selectedProd.name} ${count}개\n` +
-                    `§f선결제 금액: ${totalCost.toLocaleString()}₩`
+                    `§f선결제 금액: ${totalCost.toLocaleString()}₩\n` +
+                    `§7납품업체 전역 대기열에 발주 데이터가 등록되었습니다.`
                 );
 
             }).catch(e => console.error(e));
@@ -1886,33 +1872,38 @@ function showPosOrderUI(player, marker) {
 // ====== 상품 납품 UI ======
 // ★ 핵심 수정: marker null 체크 강화 + .catch() 추가
 // ====== 상품 납품 및 발주 처리 UI ======
+// ====== 상품 납품 및 직접 배송 처리 UI ======
+// ====== 상품 납품 및 직접 배송 처리 UI ======
 function showPosSupplyProcessUI(player, marker) {
     if (!player) return;
-    if (!marker) {
-        player.sendMessage("§c[납품 처리]\n§7POS 마커를 찾을 수 없습니다.");
-        return;
-    }
 
-    // 1. 발주 대기열(orders)의 데이터 안정성 확보 및 로딩
+    // 1. 전역 DB에서 내 이름 앞으로 온 주문 목록 로딩
     let orders = [];
     try {
-        const rawOrders = marker.getDynamicProperty("orders");
-        if (rawOrders && rawOrders.trim() !== "") {
-            orders = JSON.parse(rawOrders);
+        const rawGlobalOrders = world.getDynamicProperty(`orders_${player.name}`);
+        if (rawGlobalOrders && rawGlobalOrders.trim() !== "") {
+            orders = JSON.parse(rawGlobalOrders);
         }
     } catch (err) {
-        console.warn("[Orders Load Error] 대기열을 파싱하는 중 오류가 발생하여 초기화합니다.");
         orders = [];
     }
 
+    // 마커 백업본과 교차 검증 (방어 코드)
+    if (orders.length === 0 && marker) {
+        try {
+            const rawMarkerOrders = marker.getDynamicProperty("orders");
+            if (rawMarkerOrders) orders = JSON.parse(rawMarkerOrders);
+        } catch {}
+    }
+
     if (orders.length === 0) {
-        player.sendMessage("§c[납품 처리]\n§7현재 접수된 가맹점 발주 요청이 없습니다.");
+        player.sendMessage("§c[납품 처리]\n§7현재 본인에게 접수된 가맹점 발주 요청이 없습니다.");
         return;
     }
 
     const form = new ActionFormData()
-        .title("§l§d🚛 가맹점 발주 처리")
-        .body(`§7현재 접수된 총 발주 건수: §e${orders.length}건\n§7처리할 항목을 선택하세요.`);
+        .title("§l§d🚛 가맹점 발주 직접 배송")
+        .body(`§7현재 접수된 총 발주 건수: §e${orders.length}건\n§7가맹점으로 즉시 원격 배송할 항목을 선택하세요.`);
 
     for (const o of orders) {
         form.button(`§e📦 ${o.name}\n§f수량: ${o.count}개 | 발주자: ${o.orderPlayer}`);
@@ -1925,64 +1916,25 @@ function showPosSupplyProcessUI(player, marker) {
         const orderIndex = res.selection;
         const order = orders[orderIndex];
 
-        // 2. 주문자(가맹점주) 접속 여부 검증
+        // 2. 주문자(가맹점주) 온라인 체크
         const targetPlayer = world.getAllPlayers().find(p => p.name === order.orderPlayer);
         if (!targetPlayer) {
-            player.sendMessage(`§c[납품 실패]\n§7발주자 '${order.orderPlayer}'님이 오프라인 상태입니다.`);
+            player.sendMessage(`§c[배송 실패] 발주자 '${order.orderPlayer}'님이 오프라인입니다.`);
             return;
         }
 
-        // 3. 납품업자(본인) 인벤토리 컴포넌트 검증
-        const inv = player.getComponent("inventory")?.container;
-        if (!inv) {
-            player.sendMessage("§c[납품 실패]\n§7본인의 인벤토리를 참조할 수 없습니다.");
-            return;
-        }
-
-        // 4. 주문자(가맹점주) 인벤토리 컴포넌트 검증
+        // 3. 주문자(가맹점주) 인벤토리 컴포넌트 로드
         const targetInv = targetPlayer.getComponent("inventory")?.container;
         if (!targetInv) {
-            player.sendMessage("§c[납품 실패]\n§7가맹점주의 인벤토리를 참조할 수 없습니다.");
+            player.sendMessage("§c[배송 실패] 가맹점주의 인벤토리를 참조할 수 없습니다.");
             return;
         }
 
-        // 5. 납품업자의 실제 아이템 보유량 실시간 계산
-        let totalHave = 0;
-        for (let i = 0; i < inv.size; i++) {
-            const it = inv.getItem(i);
-            if (it && it.typeId === order.item) {
-                totalHave += it.amount;
-            }
-        }
+        // =======================================================
+        // ★ 변경 포인트: 도매업자의 인벤토리 검수 및 아이템 차감 로직 완전 삭제
+        // =======================================================
 
-        if (totalHave < order.count) {
-            player.sendMessage(`§c[납품 실패]\n§7배송할 물품의 수량이 부족합니다.\n\n§7상품: §e${order.name}\n§f현재 보유: ${totalHave}개 / §c필요: ${order.count}개`);
-            return;
-        }
-
-        // ==========================================
-        // [검증 통과] 변동 메커니즘 순차적 실행 시작
-        // ==========================================
-
-        // 6. 납품업자 인벤토리에서 아이템 실시간 차감
-        let remain = order.count;
-        for (let i = 0; i < inv.size && remain > 0; i++) {
-            const it = inv.getItem(i);
-            if (!it || it.typeId !== order.item) continue;
-
-            if (it.amount <= remain) {
-                remain -= it.amount;
-                inv.setItem(i, undefined); // 해당 슬롯 비우기
-            } else {
-                const itemType = ItemTypes.get(it.typeId);
-                if (itemType) {
-                    inv.setItem(i, new ItemStack(itemType, it.amount - remain));
-                }
-                remain = 0;
-            }
-        }
-
-        // 7. 가맹점주(발주자) 인벤토리에 아이템 안전 지급 (가득 참 방지 장치 포함)
+        // 4. 가맹점주 인벤토리로 아이템 즉시 생성 및 원격 주입 (인벤 가득 참 방어 포함)
         try {
             const targetItemType = ItemTypes.get(order.item);
             if (targetItemType) {
@@ -1993,45 +1945,45 @@ function showPosSupplyProcessUI(player, marker) {
                     const itemToGive = new ItemStack(targetItemType, giveAmount);
                     const leftover = targetInv.addItem(itemToGive);
                     
-                    // 가맹점주의 인벤토리가 도중에 가득 찬 경우 처리
                     if (leftover && leftover.amount > 0) {
+                        // 가맹점주 인벤토리가 다 차면 매장 바닥(발밑)에 떨어뜨려 드롭 배송
                         targetPlayer.dimension.spawnItem(new ItemStack(targetItemType, remainGive), targetPlayer.location);
-                        targetPlayer.sendMessage("§e[물류 알림] 인벤토리가 가득 차서 일부 배송품이 발밑에 드롭되었습니다.");
+                        targetPlayer.sendMessage("§e[물류 알림] 매장 인벤토리가 가득 차서 일부 물품이 발밑으로 직배송되었습니다.");
                         break;
                     }
                     remainGive -= giveAmount;
                 }
             }
         } catch (e) {
-            console.warn(`[Item Give Error] ${e}`);
-            // 치명적 예외 발생 시 아이템 유실을 방지하기 위한 강제 월드 스폰 드롭
+            console.warn(`[Direct Delivery Error] ${e}`);
+            // 치명적 예외 발생 시 월드 드롭으로 유실 방지
             try {
                 const dropType = ItemTypes.get(order.item);
-                if (dropType) {
-                    targetPlayer.dimension.spawnItem(new ItemStack(dropType, order.count), targetPlayer.location);
-                }
-            } catch (e2) { 
-                console.warn(`[Item Spawn Error] ${e2}`); 
-            }
+                if (dropType) targetPlayer.dimension.spawnItem(new ItemStack(dropType, order.count), targetPlayer.location);
+            } catch {}
         }
 
-        // 8. 납품업자(본인) 스코어보드 지갑에 판매 대금 충전
+        // 5. ★ [핵심] 완료 즉시 도매업자(나)의 스코어보드 지갑에 돈 추가
         try { 
             player.runCommand(`scoreboard players add @s player_money ${order.totalCost}`); 
         } catch (e) {
-            console.warn(`[Scoreboard Payment Error] ${e}`);
+            console.warn(`[Payment Scoreboard Error] 대금 정산 중 오류: ${e}`);
         }
 
-        // 9. 최종 알림 메시지 출력 및 선택된 주문 데이터 대기열에서 안전 파기
-        player.sendMessage(`§a[납품 완료]\n§e${order.orderPlayer}§f 가맹점에 §b${order.name} ${order.count}개§f 배송 완료!\n§7정산 금액: +${order.totalCost.toLocaleString()}₩`);
-        targetPlayer.sendMessage(`§a[물류 배송 완료]\n§e${player.name}§f 본사로부터 주문하신 §b${order.name} ${order.count}개§f가 매장에 도착했습니다.`);
+        // 6. 실시간 메시지 출력 및 주문 데이터 대기열에서 삭제
+        player.sendMessage(`§a[배송 및 정산 완료]\n§e${order.orderPlayer}§f 가맹점에 §b${order.name} ${order.count}개§f 배송 완료!\n§6정산 금액 입금: +${order.totalCost.toLocaleString()}₩`);
+        targetPlayer.sendMessage(`§a[본사 원격 배송 완료]\n§e${player.name}§f 본사에서 주문하신 §b${order.name} ${order.count}개§f를 매장으로 즉시 배송했습니다!`);
 
-        // 대기열에서 가공 처리가 끝난 요소 삭제 후 DB 동기화
+        // 대기열 목록에서 처리 완료된 주문 데이터 파기
         orders.splice(orderIndex, 1);
-        marker.setDynamicProperty("orders", JSON.stringify(orders));
+        
+        // 전역 데이터베이스 및 마커 세이브 동시 동기화 갱신
+        world.setDynamicProperty(`orders_${player.name}`, JSON.stringify(orders));
+        if (marker) marker.setDynamicProperty("orders", JSON.stringify(orders));
 
     }).catch(e => console.error(`[Supply Process UI Error] ${e}`));
 }
+
 // ====== POS & 키오스크 제거 감지 ======
 
 world.afterEvents.playerBreakBlock.subscribe((event) => {

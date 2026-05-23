@@ -37,6 +37,9 @@
     },
     "box_linker": {
       "textures": "textures/items/stick"
+    },
+      "soju": {
+      "textures": "textures/items/soju"
     }
   }
 }

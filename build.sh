@@ -34,8 +34,19 @@ jq \
 .modules[].version = $ver
 ' RP/manifest.json > RP/tmp.json && mv RP/tmp.json RP/manifest.json
 
+echo "📦 기존 mcaddon 삭제..."
+rm -f NationFinance.mcaddon
+
 echo "📦 mcaddon 생성..."
 zip -r NationFinance.mcaddon BP RP
+
+echo "📤 Git 업로드..."
+
+git add .
+
+git commit -m "업데이트 $VERSION"
+
+git push
 
 echo "========================"
 echo "✅ 완료: $VERSION"
