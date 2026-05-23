@@ -1,12 +1,12 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Nation Finance BP - 5.2.0",
+    "name": "Nation Finance BP - 5.3.0",
     "description": "국가전쟁 및 금융 시스템 행동 팩",
     "uuid": "7f4b2f55-7f91-4a65-8d9e-6d4e7c2f91ab",
     "version": [
       5,
-      2,
+      3,
       0
     ],
     "min_engine_version": [
@@ -21,7 +21,7 @@
       "uuid": "8e2f1a67-52d4-4f7c-b8d1-93c1e0af74bc",
       "version": [
         5,
-        2,
+        3,
         0
       ]
     },
@@ -32,7 +32,7 @@
       "entry": "scripts/main.js",
       "version": [
         5,
-        2,
+        3,
         0
       ]
     }
