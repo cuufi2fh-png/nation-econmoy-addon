@@ -1,4 +1,4 @@
-# Nation Economy & Finance Add-on (v1.7.0)
+# Nation Economy & Finance Add-on (v1.8.0)
 
 A comprehensive, highly optimized Minecraft Bedrock Edition Add-on that integrates a large-scale national warfare system with an advanced financial economy, real estate management, retail logistics, and an automated casino system.
 
